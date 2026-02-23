@@ -153,8 +153,10 @@ function renderCategoryTree() {
         const parts = path.split('>').map(p => p.trim());
         let currentLevel = tree;
         parts.forEach(part => {
-            if (!currentLevel[part]) currentLevel[part] = { _path: '', _children: {} };
-            currentLevel = currentLevel._children[part];
+            if (!currentLevel[part]) {
+                currentLevel[part] = { _path: '', _children: {} };
+            }
+            currentLevel = currentLevel[part]._children;
         });
     });
 
