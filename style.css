@@ -8,17 +8,17 @@
     --border: #EAEAEA;
     --wapp-color: #25D366;
     --wapp-hover: #1EBE5D;
-    
+
     /* Typography */
     --font-family: 'Outfit', sans-serif;
-    
+
     /* Variables */
     --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     --radius-md: 12px;
     --radius-lg: 24px;
-    --shadow-sm: 0 4px 6px rgba(0,0,0,0.02);
-    --shadow-md: 0 10px 30px rgba(0,0,0,0.05);
-    --shadow-hover: 0 20px 40px rgba(0,0,0,0.1);
+    --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.02);
+    --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
 * {
@@ -46,7 +46,9 @@ body {
 }
 
 /* Typography elements */
-h1, h2, h3 {
+h1,
+h2,
+h3 {
     font-weight: 600;
     line-height: 1.2;
 }
@@ -80,7 +82,7 @@ a {
 .btn-primary:hover {
     background-color: #333;
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
 .btn-outline {
@@ -112,7 +114,7 @@ a {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     padding: 16px 0;
-    box-shadow: 0 1px 0 rgba(0,0,0,0.05);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
 }
 
 .nav-content {
@@ -178,7 +180,7 @@ a {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(to right, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0) 100%);
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.7) 50%, rgba(255, 255, 255, 0) 100%);
 }
 
 .hero-content {
@@ -191,7 +193,7 @@ a {
 .badge {
     display: inline-block;
     padding: 6px 12px;
-    background: rgba(0,0,0,0.05);
+    background: rgba(0, 0, 0, 0.05);
     border-radius: 50px;
     font-size: 0.85rem;
     font-weight: 600;
@@ -272,15 +274,85 @@ a {
     aspect-ratio: 4/5;
 }
 
-.product-image img {
+.carousel-img {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.7s ease;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out, transform 0.7s ease;
 }
 
-.product-card:hover .product-image img {
+.carousel-img.active {
+    opacity: 1;
+    z-index: 1;
+}
+
+.product-card:hover .carousel-img.active {
     transform: scale(1.05);
+}
+
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.8);
+    color: var(--text-main);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: var(--transition);
+    z-index: 3;
+    box-shadow: var(--shadow-sm);
+}
+
+.carousel-btn:hover {
+    background: var(--accent);
+    color: #fff;
+}
+
+.product-image:hover .carousel-btn {
+    opacity: 1;
+}
+
+.carousel-btn.prev {
+    left: 10px;
+}
+
+.carousel-btn.next {
+    right: 10px;
+}
+
+.carousel-dots {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 3;
+}
+
+.carousel-dots .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    transition: var(--transition);
+}
+
+.carousel-dots .dot.active {
+    background: #fff;
+    transform: scale(1.2);
 }
 
 .product-overlay {
@@ -289,7 +361,7 @@ a {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.02);
+    background: rgba(0, 0, 0, 0.02);
     display: flex;
     justify-content: flex-end;
     align-items: flex-start;
@@ -407,13 +479,13 @@ footer {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding-bottom: 60px;
     margin-bottom: 24px;
 }
 
 .footer-brand p {
-    color: rgba(255,255,255,0.6);
+    color: rgba(255, 255, 255, 0.6);
     margin-top: 8px;
 }
 
@@ -434,7 +506,7 @@ footer {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     color: #fff;
 }
 
@@ -445,7 +517,7 @@ footer {
 
 .footer-bottom {
     text-align: center;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.5);
     font-size: 0.9rem;
 }
 
@@ -499,11 +571,11 @@ footer {
     .hero h1 {
         font-size: 3.5rem;
     }
-    
+
     .nav-links {
         display: none;
     }
-    
+
     .footer-content {
         flex-direction: column;
         gap: 40px;

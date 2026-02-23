@@ -2,8 +2,8 @@ const WAPP_NUMBER = "5493513213607"; // Tu número de WhatsApp
 
 // OPCIÓN GOOGLE SHEETS (RECOMENDADO PARA EL CLIENTE):
 // 1. Crear un Google Sheet con las siguientes columnas exactas: 
-//    id | name | price | description | image | sizes 
-//    (los talles separados por guión, ej: S-M-L)
+//    id | name | price | description | image | image2 | sizes 
+//    (los talles separados por guión, ej: S-M-L. "image2" es opcional)
 // 2. Ir a Archivo > Compartir > Publicar en la web. Elegir "Toda la hoja" y formato "Valores separados por comas (.csv)".
 // 3. Pegar el link resultante (que termina en output=csv) acá abajo:
 const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRE4J4z_92RsGr4wXl4V_05IJapKnYC0Gi4sGaCsVrTbYxiKceFZs9WPsgahOMBlLjtPQ4__VEudniu/pub?output=csv";
@@ -48,7 +48,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         name: row.name || '',
                         price: row.price || '',
                         description: row.description || '',
-                        image: parseDriveLink(row.image || ''),
+                        image1: parseDriveLink(row.image || row.image1 || ''),
+                        image2: parseDriveLink(row.image2 || ''),
                         sizes: (row.sizes || '').split('-').map(s => s.trim()).filter(Boolean)
                     }));
                     renderProducts(productsToRender, productsContainer);
@@ -88,10 +89,29 @@ function renderProducts(productList, container) {
             ? product.sizes.map((size, index) => `<span class="${index === 1 ? 'active' : ''}">${size}</span>`).join('')
             : '';
 
+        const hasTwoImages = product.image1 && product.image2;
+
+        let imagesHtml = '';
+        if (product.image1) imagesHtml += `<img src="${product.image1}" alt="${product.name}" class="carousel-img active">`;
+        if (product.image2) imagesHtml += `<img src="${product.image2}" alt="${product.name} vista 2" class="carousel-img">`;
+
+        let carouselControls = '';
+        if (hasTwoImages) {
+            carouselControls = `
+                <button class="carousel-btn prev"><i class="ri-arrow-left-s-line"></i></button>
+                <button class="carousel-btn next"><i class="ri-arrow-right-s-line"></i></button>
+                <div class="carousel-dots">
+                    <span class="dot active"></span>
+                    <span class="dot"></span>
+                </div>
+            `;
+        }
+
         const productHtml = `
             <div class="product-card">
                 <div class="product-image">
-                    <img src="${product.image}" alt="${product.name}">
+                    ${imagesHtml}
+                    ${carouselControls}
                     <div class="product-overlay">
                         <button class="btn-icon add-to-favorites"><i class="ri-heart-3-line"></i></button>
                     </div>
@@ -157,5 +177,41 @@ function attachDynamicListeners() {
 
             window.open(formatWAppLink(message), '_blank');
         });
+    });
+
+    // 5. Lógica de los carruseles de imágenes
+    document.querySelectorAll('.product-image').forEach(container => {
+        const imgs = container.querySelectorAll('.carousel-img');
+        if (imgs.length <= 1) return; // Si hay 1 o 0 imágenes, no hace falta carrusel
+
+        const prevBtn = container.querySelector('.prev');
+        const nextBtn = container.querySelector('.next');
+        const dots = container.querySelectorAll('.dot');
+        let currentIndex = 0;
+
+        const showImage = (index) => {
+            imgs.forEach(img => img.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            imgs[index].classList.add('active');
+            dots[index].classList.add('active');
+        };
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                currentIndex = (currentIndex + 1) % imgs.length;
+                showImage(currentIndex);
+            });
+        }
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                currentIndex = (currentIndex - 1 + imgs.length) % imgs.length;
+                showImage(currentIndex);
+            });
+        }
     });
 }
