@@ -315,6 +315,11 @@ a {
     color: var(--text-main);
 }
 
+.radio-label.subcategory {
+    margin-left: 20px;
+    font-size: 0.9rem;
+}
+
 .radio-label input,
 .checkbox-label input {
     accent-color: var(--accent);

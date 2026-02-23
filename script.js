@@ -129,37 +129,70 @@ function buildFilterUI() {
         p.colors.forEach(c => colorsSet.add(c));
     });
 
-    // Construir UI de Categorías (Árbol simplificado)
+    // Construir UI de Categorías (Jerárquica)
     const categoryContainer = document.getElementById('category-filters');
     if (categoryContainer && categoriesSet.size > 0) {
-        // Encontrar categorías principales (antes del primer '>')
-        const mainCats = new Set([...categoriesSet].map(c => c.split('>')[0].trim()));
+        function renderCategoryTree() {
+            // 1. Agrupar categorías por su primer nivel
+            const tree = {};
+            [...categoriesSet].forEach(fullPath => {
+                const parts = fullPath.split('>').map(p => p.trim());
+                const root = parts[0];
+                if (!tree[root]) tree[root] = new Set();
+                if (parts.length > 1) {
+                    // Guardar el resto del path como subcategoría
+                    tree[root].add(parts.slice(1).join(' > '));
+                }
+            });
 
-        let html = `<div class="radio-label">
-            <input type="radio" name="category" value="" checked>
-            <span>Todas</span>
-        </div>`;
+            const currentRoot = activeFilters.category ? activeFilters.category.split('>')[0].trim() : null;
 
-        // Agregar las exactas que vienen en el excel para simplificar (o armar arbol)
-        // Por simplicidad para el filtro y UI, listaremos todas las rutas completas o principales
-        [...categoriesSet].sort().forEach(cat => {
-            const displayCat = cat.replace(/>/g, '›'); // visualmente mejor
-            html += `
+            let html = `
                 <div class="radio-label">
-                    <input type="radio" name="category" value="${cat}">
-                    <span>${displayCat}</span>
+                    <input type="radio" name="category" value="" ${!activeFilters.category ? 'checked' : ''}>
+                    <span>Todas</span>
                 </div>
             `;
-        });
-        categoryContainer.innerHTML = html;
 
-        // Listeners
-        categoryContainer.querySelectorAll('input').forEach(input => {
-            input.addEventListener('change', (e) => {
-                activeFilters.category = e.target.value || null;
-                applyFiltersAndRender();
+            Object.keys(tree).sort().forEach(root => {
+                const isRootSelected = currentRoot === root;
+                const isExactRootSelected = activeFilters.category === root;
+
+                html += `
+                    <div class="radio-label">
+                        <input type="radio" name="category" value="${root}" ${isExactRootSelected ? 'checked' : ''}>
+                        <span style="font-weight: ${isRootSelected ? '600' : '400'}">${root}</span>
+                    </div>
+                `;
+
+                // Si este nivel raíz está seleccionado, mostrar sus hijos
+                if (isRootSelected && tree[root].size > 0) {
+                    [...tree[root]].sort().forEach(sub => {
+                        const fullChildPath = `${root} > ${sub}`;
+                        const isSubSelected = activeFilters.category === fullChildPath;
+                        html += `
+                            <div class="radio-label subcategory">
+                                <input type="radio" name="category" value="${fullChildPath}" ${isSubSelected ? 'checked' : ''}>
+                                <span>${sub}</span>
+                            </div>
+                        `;
+                    });
+                }
             });
-        });
+
+            categoryContainer.innerHTML = html;
+
+            // Re-asignar listeners cada vez que re-renderizamos el árbol
+            categoryContainer.querySelectorAll('input').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    activeFilters.category = e.target.value || null;
+                    renderCategoryTree(); // Re-renderizar el árbol para mostrar/ocultar hijos
+                    applyFiltersAndRender();
+                });
+            });
+        }
+
+        renderCategoryTree();
     }
 
     // Construir UI Marcas
