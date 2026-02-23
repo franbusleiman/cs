@@ -377,7 +377,7 @@ function renderProducts(productList) {
                 <div class="product-info">
                     <div class="product-header">
                         <h3>${product.name}</h3>
-                        <span class="price">${product.price}</span>
+                        <span class="price">${product.price} USD</span>
                     </div>
                     <p class="description">${product.description}</p>
                     <div class="sizes">
