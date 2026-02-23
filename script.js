@@ -19,7 +19,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (GOOGLE_SHEET_CSV_URL.trim() !== "") {
         try {
-            const response = await fetch(GOOGLE_SHEET_CSV_URL);
+            // Se le suma un parámetro de tiempo al final de la URL para "engañar" al caché y forzar descarga fresca
+            const timestamp = new Date().getTime();
+            const noCacheUrl = GOOGLE_SHEET_CSV_URL + (GOOGLE_SHEET_CSV_URL.includes('?') ? '&' : '?') + 't=' + timestamp;
+
+            const response = await fetch(noCacheUrl, { cache: "no-store" });
             const csvText = await response.text();
 
             // Función para convertir links de Google Drive a links directos de imagen
