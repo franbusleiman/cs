@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const driveRegex = /(?:drive\.google\.com\/(?:file\/d\/|open\?id=)|docs\.google\.com\/uc\?id=)([a-zA-Z0-9_-]+)/;
                 const match = url.match(driveRegex);
                 if (match && match[1]) {
-                    // export=download a veces funciona mejor para img tags sin bloquearse por CORS
-                    return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+                    // Usar la API de thumbnails de Drive es el único método 100% fiable hoy en día para etiquetas <img>
+                    return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
                 }
                 return url; // Si no es de Drive, dejar la URL tal cual (ej: imgur, unsplash)
             };
