@@ -110,193 +110,216 @@ function normalizeProducts(rawList) {
     }));
 }
 
+const COLOR_MAP = {
+    'rojo': '#e74c3c', 'azul': '#3498db', 'verde': '#2ecc71',
+    'negro': '#222222', 'blanco': '#ffffff', 'gris': '#95a5a6',
+    'amarillo': '#f1c40f', 'rosa': '#e84393', 'naranja': '#e67e22',
+    'beige': '#f5f5dc', 'marrón': '#8b4513', 'celeste': '#87ceeb',
+    'violeta': '#9b59b6', 'fucsia': '#ff00ff', 'crema': '#fffdd0'
+};
+
 function initStore() {
-    buildFilterUI();
     applyFiltersAndRender();
 }
 
-function buildFilterUI() {
-    // Extraer datos únicos
-    const categoriesSet = new Set();
+function buildFilterUI(filteredProducts) {
+    // 1. Extraer datos únicos SOLAMENTE de los productos que están pasando el filtro de CATEGORÍA
+    // Nota: Para Marcas/Talles/Colores usamos el productList actual de la vista
     const brandsSet = new Set();
     const sizesSet = new Set();
     const colorsSet = new Set();
 
-    allProducts.forEach(p => {
-        if (p.category) categoriesSet.add(p.category);
+    filteredProducts.forEach(p => {
         if (p.brand) brandsSet.add(p.brand);
         p.sizes.forEach(s => sizesSet.add(s));
         p.colors.forEach(c => colorsSet.add(c));
     });
 
-    // Construir UI de Categorías (Jerárquica)
+    renderBrandFilters(brandsSet);
+    renderSizeFilters(sizesSet);
+    renderColorFilters(colorsSet);
+}
+
+function renderCategoryTree() {
     const categoryContainer = document.getElementById('category-filters');
-    if (categoryContainer && categoriesSet.size > 0) {
-        function renderCategoryTree() {
-            // 1. Agrupar categorías por su primer nivel
-            const tree = {};
-            [...categoriesSet].forEach(fullPath => {
-                const parts = fullPath.split('>').map(p => p.trim());
-                const root = parts[0];
-                if (!tree[root]) tree[root] = new Set();
-                if (parts.length > 1) {
-                    // Guardar el resto del path como subcategoría
-                    tree[root].add(parts.slice(1).join(' > '));
-                }
-            });
+    if (!categoryContainer) return;
 
-            const currentRoot = activeFilters.category ? activeFilters.category.split('>')[0].trim() : null;
+    const categoriesSet = new Set();
+    allProducts.forEach(p => { if (p.category) categoriesSet.add(p.category); });
 
-            let html = `
-                <div class="radio-label">
-                    <input type="radio" name="category" value="" ${!activeFilters.category ? 'checked' : ''}>
-                    <span>Todas</span>
+    // Construir objeto de árbol
+    const tree = {};
+    categoriesSet.forEach(path => {
+        const parts = path.split('>').map(p => p.trim());
+        let currentLevel = tree;
+        parts.forEach(part => {
+            if (!currentLevel[part]) currentLevel[part] = { _path: '', _children: {} };
+            currentLevel = currentLevel._children[part];
+        });
+    });
+
+    // Función recursiva para setear los paths completos
+    function setPaths(node, parentPath = '') {
+        Object.keys(node).forEach(key => {
+            const fullPath = parentPath ? `${parentPath} > ${key}` : key;
+            node[key]._path = fullPath;
+            setPaths(node[key]._children, fullPath);
+        });
+    }
+    setPaths(tree);
+
+    function generateHtml(node, level = 0) {
+        let html = '';
+        Object.keys(node).sort().forEach(key => {
+            const item = node[key];
+            const isSelected = activeFilters.category === item._path;
+            const isParentOfSelected = activeFilters.category && activeFilters.category.startsWith(item._path + ' >');
+            const hasChildren = Object.keys(item._children).length > 0;
+
+            html += `
+                <div class="radio-label" style="margin-left: ${level * 20}px">
+                    <input type="radio" name="category" value="${item._path}" ${isSelected ? 'checked' : ''}>
+                    <span style="font-weight: ${isSelected || isParentOfSelected ? '600' : '400'}">${key}</span>
                 </div>
             `;
 
-            Object.keys(tree).sort().forEach(root => {
-                const isRootSelected = currentRoot === root;
-                const isExactRootSelected = activeFilters.category === root;
-
-                html += `
-                    <div class="radio-label">
-                        <input type="radio" name="category" value="${root}" ${isExactRootSelected ? 'checked' : ''}>
-                        <span style="font-weight: ${isRootSelected ? '600' : '400'}">${root}</span>
-                    </div>
-                `;
-
-                // Si este nivel raíz está seleccionado, mostrar sus hijos
-                if (isRootSelected && tree[root].size > 0) {
-                    [...tree[root]].sort().forEach(sub => {
-                        const fullChildPath = `${root} > ${sub}`;
-                        const isSubSelected = activeFilters.category === fullChildPath;
-                        html += `
-                            <div class="radio-label subcategory">
-                                <input type="radio" name="category" value="${fullChildPath}" ${isSubSelected ? 'checked' : ''}>
-                                <span>${sub}</span>
-                            </div>
-                        `;
-                    });
-                }
-            });
-
-            categoryContainer.innerHTML = html;
-
-            // Re-asignar listeners cada vez que re-renderizamos el árbol
-            categoryContainer.querySelectorAll('input').forEach(input => {
-                input.addEventListener('change', (e) => {
-                    activeFilters.category = e.target.value || null;
-                    renderCategoryTree(); // Re-renderizar el árbol para mostrar/ocultar hijos
-                    applyFiltersAndRender();
-                });
-            });
-        }
-
-        renderCategoryTree();
+            // Mostrar hijos solo si esta ruta es padre de la seleccionada o es la seleccionada
+            if (isSelected || isParentOfSelected) {
+                html += generateHtml(item._children, level + 1);
+            }
+        });
+        return html;
     }
 
-    // Construir UI Marcas
-    const brandContainer = document.getElementById('brand-filters');
-    if (brandContainer && brandsSet.size > 0) {
-        let html = '';
-        [...brandsSet].sort().forEach(brand => {
-            html += `
-                <label class="checkbox-label">
-                    <input type="checkbox" value="${brand}" class="filter-brand">
-                    <span>${brand}</span>
-                </label>
-            `;
+    let rootHtml = `
+        <div class="radio-label">
+            <input type="radio" name="category" value="" ${!activeFilters.category ? 'checked' : ''}>
+            <span>Todas</span>
+        </div>
+    `;
+    rootHtml += generateHtml(tree);
+    categoryContainer.innerHTML = rootHtml;
+
+    categoryContainer.querySelectorAll('input').forEach(input => {
+        input.addEventListener('change', (e) => {
+            activeFilters.category = e.target.value || null;
+            // Al cambiar de categoría, reseteamos los otros filtros para evitar estados imposibles
+            activeFilters.brands = [];
+            activeFilters.sizes = [];
+            activeFilters.colors = [];
+            applyFiltersAndRender();
         });
-        brandContainer.innerHTML = html;
-
-        brandContainer.querySelectorAll('input').forEach(input => {
-            input.addEventListener('change', () => {
-                const checked = Array.from(brandContainer.querySelectorAll('input:checked')).map(cb => cb.value);
-                activeFilters.brands = checked;
-                applyFiltersAndRender();
-            });
-        });
-    } else if (brandContainer) {
-        brandContainer.parentElement.style.display = 'none';
-    }
-
-    // Construir UI Talles
-    const sizeContainer = document.getElementById('size-filters');
-    if (sizeContainer && sizesSet.size > 0) {
-        let html = '';
-        // Ordenar talles de ropa estandar si es posible
-        const sizeOrder = { 'XS': 1, 'S': 2, 'M': 3, 'L': 4, 'XL': 5, 'XXL': 6 };
-        const sortedSizes = [...sizesSet].sort((a, b) => (sizeOrder[a] || 99) - (sizeOrder[b] || 99));
-
-        sortedSizes.forEach(size => {
-            html += `<span class="size-filter-btn" data-value="${size}">${size}</span>`;
-        });
-        sizeContainer.innerHTML = html;
-
-        sizeContainer.querySelectorAll('.size-filter-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.target.classList.toggle('active');
-                activeFilters.sizes = Array.from(sizeContainer.querySelectorAll('.active')).map(b => b.dataset.value);
-                applyFiltersAndRender();
-            });
-        });
-    }
-
-    // Construir UI Colores (Circulos)
-    const colorContainer = document.getElementById('color-filters');
-    if (colorContainer && colorsSet.size > 0) {
-        let html = '';
-        const colorMap = {
-            'rojo': '#e74c3c', 'azul': '#3498db', 'verde': '#2ecc71',
-            'negro': '#222222', 'blanco': '#ffffff', 'gris': '#95a5a6',
-            'amarillo': '#f1c40f', 'rosa': '#e84393', 'naranja': '#e67e22',
-            'beige': '#f5f5dc', 'marrón': '#8b4513'
-        };
-
-        [...colorsSet].forEach(color => {
-            const hex = colorMap[color] || color; // fallback
-            // Si es blanco ponerle borde oscuro
-            const borderStyle = (color === 'blanco' || hex === '#ffffff') ? 'border: 1px solid #ccc;' : '';
-            html += `<span class="color-filter-btn" data-value="${color}" style="background-color: ${hex}; ${borderStyle}" title="${color}"></span>`;
-        });
-        colorContainer.innerHTML = html;
-
-        colorContainer.querySelectorAll('.color-filter-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.target.classList.toggle('active');
-                activeFilters.colors = Array.from(colorContainer.querySelectorAll('.active')).map(b => b.dataset.value);
-                applyFiltersAndRender();
-            });
-        });
-    } else if (colorContainer) {
-        colorContainer.parentElement.style.display = 'none';
-    }
+    });
 }
 
-function applyFiltersAndRender() {
-    const filtered = allProducts.filter(p => {
-        // Categoría: si seleccioné "Hombre", quiero "Hombre > Remeras" y "Hombre > Buzos". (starts with)
+function renderBrandFilters(brandsSet) {
+    const brandContainer = document.getElementById('brand-filters');
+    if (!brandContainer) return;
+
+    if (brandsSet.size === 0) {
+        brandContainer.parentElement.style.display = 'none';
+        return;
+    }
+    brandContainer.parentElement.style.display = 'block';
+
+    let html = '';
+    [...brandsSet].sort().forEach(brand => {
+        const isChecked = activeFilters.brands.includes(brand);
+        html += `
+            <label class="checkbox-label">
+                <input type="checkbox" value="${brand}" class="filter-brand" ${isChecked ? 'checked' : ''}>
+                <span>${brand}</span>
+            </label>
+        `;
+    });
+    brandContainer.innerHTML = html;
+
+    brandContainer.querySelectorAll('input').forEach(input => {
+        input.addEventListener('change', () => {
+            activeFilters.brands = Array.from(brandContainer.querySelectorAll('input:checked')).map(cb => cb.value);
+            applyFiltersAndRender(false); // false para no reconstruir marcas/talles/colores mientras seleccionamos
+        });
+    });
+}
+
+function renderSizeFilters(sizesSet) {
+    const sizeContainer = document.getElementById('size-filters');
+    if (!sizeContainer) return;
+
+    if (sizesSet.size === 0) {
+        sizeContainer.parentElement.style.display = 'none';
+        return;
+    }
+    sizeContainer.parentElement.style.display = 'block';
+
+    const sizeOrder = { 'XS': 1, 'S': 2, 'M': 3, 'L': 4, 'XL': 5, 'XXL': 6 };
+    const sortedSizes = [...sizesSet].sort((a, b) => (sizeOrder[a] || 99) - (sizeOrder[b] || 99));
+
+    let html = '';
+    sortedSizes.forEach(size => {
+        const isActive = activeFilters.sizes.includes(size);
+        html += `<span class="size-filter-btn ${isActive ? 'active' : ''}" data-value="${size}">${size}</span>`;
+    });
+    sizeContainer.innerHTML = html;
+
+    sizeContainer.querySelectorAll('.size-filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.target.classList.toggle('active');
+            activeFilters.sizes = Array.from(sizeContainer.querySelectorAll('.active')).map(b => b.dataset.value);
+            applyFiltersAndRender(false);
+        });
+    });
+}
+
+function renderColorFilters(colorsSet) {
+    const colorContainer = document.getElementById('color-filters');
+    if (!colorContainer) return;
+
+    if (colorsSet.size === 0) {
+        colorContainer.parentElement.style.display = 'none';
+        return;
+    }
+    colorContainer.parentElement.style.display = 'block';
+
+    let html = '';
+    [...colorsSet].sort().forEach(color => {
+        const hex = COLOR_MAP[color] || color;
+        const isActive = activeFilters.colors.includes(color);
+        const borderStyle = (color === 'blanco' || hex === '#ffffff') ? 'border: 1px solid #ccc;' : '';
+        html += `<span class="color-filter-btn ${isActive ? 'active' : ''}" data-value="${color}" style="background-color: ${hex}; ${borderStyle}" title="${color}"></span>`;
+    });
+    colorContainer.innerHTML = html;
+
+    colorContainer.querySelectorAll('.color-filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.target.classList.toggle('active');
+            activeFilters.colors = Array.from(colorContainer.querySelectorAll('.active')).map(b => b.dataset.value);
+            applyFiltersAndRender(false);
+        });
+    });
+}
+
+function applyFiltersAndRender(rebuildUI = true) {
+    // 1. Filtrar primero por categoría para saber qué opciones de Marca/Talle/Color mostrar
+    const categoryFiltered = allProducts.filter(p => {
         if (activeFilters.category && !p.category.startsWith(activeFilters.category)) return false;
-
-        // Marcas: si hay seleccionadas, el array debe incluir la marca del producto
-        if (activeFilters.brands.length > 0 && !activeFilters.brands.includes(p.brand)) return false;
-
-        // Talles: el producto debe tener AL MENOS UNO de los talles seleccionados (o todos, según preferencia, lo hacemos OR aquí)
-        if (activeFilters.sizes.length > 0) {
-            const hasSize = activeFilters.sizes.some(s => p.sizes.includes(s));
-            if (!hasSize) return false;
-        }
-
-        // Colores: el producto debe tener al menos uno de los colores seleccionados
-        if (activeFilters.colors.length > 0) {
-            const hasColor = activeFilters.colors.some(c => p.colors.includes(c));
-            if (!hasColor) return false;
-        }
-
         return true;
     });
 
-    renderProducts(filtered);
+    if (rebuildUI) {
+        renderCategoryTree();
+        buildFilterUI(categoryFiltered);
+    }
+
+    // 2. Aplicar el resto de los filtros sobre los ya filtrados por categoría
+    const fullyFiltered = categoryFiltered.filter(p => {
+        if (activeFilters.brands.length > 0 && !activeFilters.brands.includes(p.brand)) return false;
+        if (activeFilters.sizes.length > 0 && !activeFilters.sizes.some(s => p.sizes.includes(s))) return false;
+        if (activeFilters.colors.length > 0 && !activeFilters.colors.some(c => p.colors.includes(c))) return false;
+        return true;
+    });
+
+    renderProducts(fullyFiltered);
 }
 
 function renderProducts(productList) {
