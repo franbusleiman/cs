@@ -6,7 +6,7 @@ const WAPP_NUMBER = "5493513213607"; // Tu número de WhatsApp
 //    (los talles separados por guión, ej: S-M-L)
 // 2. Ir a Archivo > Compartir > Publicar en la web. Elegir "Toda la hoja" y formato "Valores separados por comas (.csv)".
 // 3. Pegar el link resultante (que termina en output=csv) acá abajo:
-const GOOGLE_SHEET_CSV_URL = "";
+const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRE4J4z_92RsGr4wXl4V_05IJapKnYC0Gi4sGaCsVrTbYxiKceFZs9WPsgahOMBlLjtPQ4__VEudniu/pub?output=csv";
 
 document.addEventListener('DOMContentLoaded', async () => {
     const productsContainer = document.getElementById('products-container');
@@ -22,6 +22,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             const response = await fetch(GOOGLE_SHEET_CSV_URL);
             const csvText = await response.text();
 
+            // Función para convertir links de Google Drive a links directos de imagen
+            const parseDriveLink = (url) => {
+                if (!url) return '';
+                const driveRegex = /(?:drive\.google\.com\/(?:file\/d\/|open\?id=)|docs\.google\.com\/uc\?id=)([a-zA-Z0-9_-]+)/;
+                const match = url.match(driveRegex);
+                if (match && match[1]) {
+                    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+                }
+                return url; // Si no es de Drive, dejar la URL tal cual (ej: imgur, unsplash)
+            };
+
             // PapaParse convierte el CSV en objetos de Javascript facilísimo
             Papa.parse(csvText, {
                 header: true,
@@ -32,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         name: row.name || '',
                         price: row.price || '',
                         description: row.description || '',
-                        image: row.image || '',
+                        image: parseDriveLink(row.image || ''),
                         sizes: (row.sizes || '').split('-').map(s => s.trim()).filter(Boolean)
                     }));
                     renderProducts(productsToRender, productsContainer);
