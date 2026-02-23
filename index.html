@@ -43,11 +43,59 @@
         <div class="container">
             <div class="section-header">
                 <h2>Nuestra Colección</h2>
-                <p>Piezas únicas que no pueden faltar en tu armario.</p>
+                <p>Encontrá exactamente lo que buscás usando los filtros.</p>
             </div>
 
-            <div class="products-grid" id="products-container">
-                <!-- Los productos se cargarán dinámicamente desde products.js -->
+            <!-- Mobile Filter Toggle -->
+            <button class="btn btn-outline mobile-filter-btn" id="mobile-filter-btn">
+                <i class="ri-filter-3-line"></i> Mostrar Filtros
+            </button>
+
+            <div class="shop-layout">
+                <!-- Sidebar Filters -->
+                <aside class="shop-sidebar" id="shop-sidebar">
+                    <div class="sidebar-header">
+                        <h3>Filtros</h3>
+                        <button class="btn-icon close-filters" id="close-filters"><i class="ri-close-line"></i></button>
+                    </div>
+
+                    <!-- Categories -->
+                    <div class="filter-group">
+                        <h4 class="filter-title">Categorías</h4>
+                        <div class="filter-content" id="category-filters">
+                            <!-- Categorías dinámicas aquí -->
+                        </div>
+                    </div>
+
+                    <!-- Brands -->
+                    <div class="filter-group">
+                        <h4 class="filter-title">Marcas</h4>
+                        <div class="filter-content" id="brand-filters">
+                            <!-- Marcas dinámicas aquí -->
+                        </div>
+                    </div>
+
+                    <!-- Sizes -->
+                    <div class="filter-group">
+                        <h4 class="filter-title">Talles</h4>
+                        <div class="filter-content sizes-filter" id="size-filters">
+                            <!-- Talles dinámicos aquí -->
+                        </div>
+                    </div>
+
+                    <!-- Colors -->
+                    <div class="filter-group">
+                        <h4 class="filter-title">Colores</h4>
+                        <div class="filter-content colors-filter" id="color-filters">
+                            <!-- Colores dinámicos aquí -->
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Products -->
+                <div class="products-container" id="products-container">
+                    <!-- Los productos se cargarán dinámicamente -->
+                </div>
             </div>
         </div>
     </section>
