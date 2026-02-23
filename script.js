@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const mainWappBtn = document.getElementById('main-wapp-link');
     const formatWAppLink = (text) => `https://wa.me/${WAPP_NUMBER}?text=${encodeURIComponent(text)}`;
     if (mainWappBtn) {
-        mainWappBtn.href = formatWAppLink("Hola! Me gustaría hacer una consulta sobre la tienda ALOQUEDA IMPORTADO.");
+        mainWappBtn.href = formatWAppLink("Hola! Me gustaría hacer una consulta. Busco una prenda específica para cotizar con ALOQUEDA ROPA IMPORTADA.");
     }
 
     // 3. Lógica del menú de filtros en Móvil
