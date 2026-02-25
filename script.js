@@ -383,7 +383,7 @@ function renderProducts(productList) {
                     <div class="sizes">
                         ${sizesHtml}
                     </div>
-                    <button class="btn btn-outline wapp-btn" data-product="${product.name}">
+                    <button class="btn btn-outline wapp-btn" data-product="${product.name}" data-id="${product.id}">
                         <i class="ri-whatsapp-line"></i> Consultar
                     </button>
                 </div>
@@ -415,13 +415,14 @@ function attachDynamicListeners() {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             const productName = btn.getAttribute('data-product');
+            const productId = btn.getAttribute('data-id');
             const sizeContainer = btn.closest('.product-info').querySelector('.sizes');
             const activeSizeSpan = sizeContainer ? sizeContainer.querySelector('.active') : null;
             const selectedSize = activeSizeSpan ? activeSizeSpan.innerText : '';
 
             const message = selectedSize
-                ? `Hola! Estoy interesado/a en el producto: *${productName}* en talle *${selectedSize}*. ¿Me podrían dar más información?`
-                : `Hola! Estoy interesado/a en el producto: *${productName}*. ¿Me podrían dar más información?`;
+                ? `Hola! Estoy interesado/a en el producto: *${productName}* (Ref: *${productId}*) en talle *${selectedSize}*. ¿Me podrían dar más información?`
+                : `Hola! Estoy interesado/a en el producto: *${productName}* (Ref: *${productId}*). ¿Me podrían dar más información?`;
 
             window.open(formatWAppLink(message), '_blank');
         });
