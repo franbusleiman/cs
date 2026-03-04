@@ -96,18 +96,20 @@ const parseDriveLink = (url) => {
 
 // Normalizar datos vengan de donde vengan
 function normalizeProducts(rawList) {
-    return rawList.map(row => ({
-        id: row.id || '',
-        name: row.name || '',
-        price: row.price || '',
-        description: row.description || '',
-        image1: parseDriveLink(row.image || row.image1 || ''),
-        image2: parseDriveLink(row.image2 || ''),
-        sizes: (row.sizes || '').split('-').map(s => s.trim()).filter(Boolean),
-        category: (row.category || '').replace(/\s+/g, ' ').trim(),
-        brand: (row.brand || '').replace(/\s+/g, ' ').trim(),
-        colors: (row.colors || '').split('-').map(c => c.trim().toLowerCase()).filter(Boolean)
-    }));
+    return rawList
+        .filter(row => row.id && String(row.id).trim() !== '')
+        .map(row => ({
+            id: row.id || '',
+            name: row.name || '',
+            price: row.price || '',
+            description: row.description || '',
+            image1: parseDriveLink(row.image || row.image1 || ''),
+            image2: parseDriveLink(row.image2 || ''),
+            sizes: (row.sizes || '').split('-').map(s => s.trim()).filter(Boolean),
+            category: (row.category || '').replace(/\s+/g, ' ').trim(),
+            brand: (row.brand || '').replace(/\s+/g, ' ').trim(),
+            colors: (row.colors || '').split('-').map(c => c.trim().toLowerCase()).filter(Boolean)
+        }));
 }
 
 const COLOR_MAP = {
