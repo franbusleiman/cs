@@ -16,6 +16,9 @@ let activeFilters = {
     colors: []
 };
 
+let currentCurrency = 'USD'; // 'USD' o 'ARS'
+let exchangeRate = 1000; // Valor por defecto, se actualizará desde el Excel
+
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Efecto Scroll en Navbar
     const navbar = document.getElementById('navbar');
@@ -80,6 +83,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 initStore();
             }
         }
+
+        // 5. Listener para el switch de moneda
+        const currencySwitch = document.getElementById('currency-switch');
+        const usdLabel = document.getElementById('usd-label');
+        const arsLabel = document.getElementById('ars-label');
+
+        if (currencySwitch) {
+            currencySwitch.addEventListener('change', () => {
+                currentCurrency = currencySwitch.checked ? 'ARS' : 'USD';
+                if (currentCurrency === 'ARS') {
+                    arsLabel.classList.add('active');
+                    usdLabel.classList.remove('active');
+                } else {
+                    usdLabel.classList.add('active');
+                    arsLabel.classList.remove('active');
+                }
+                applyFiltersAndRender(false);
+            });
+        }
     }
 });
 
@@ -96,19 +118,26 @@ const parseDriveLink = (url) => {
 
 // Normalizar datos vengan de donde vengan
 function normalizeProducts(rawList) {
+    // Buscar tipo de cambio en el CSV
+    const configRow = rawList.find(row => String(row.id).toUpperCase() === 'CONFIG' || String(row.name).toUpperCase() === 'TC');
+    if (configRow && configRow.price) {
+        exchangeRate = parseFloat(configRow.price) || exchangeRate;
+    }
+
     return rawList
-        .filter(row => row.id && String(row.id).trim() !== '')
+        .filter(row => row.id && String(row.id).trim() !== '' && String(row.id).toUpperCase() !== 'CONFIG' && String(row.name).toUpperCase() !== 'TC')
         .map(row => ({
             id: row.id || '',
             name: row.name || '',
-            price: row.price || '',
+            price: parseFloat(row.price) || 0,
             description: row.description || '',
             image1: parseDriveLink(row.image || row.image1 || ''),
             image2: parseDriveLink(row.image2 || ''),
             sizes: (row.sizes || '').split('-').map(s => s.trim()).filter(Boolean),
             category: (row.category || '').replace(/\s+/g, ' ').trim(),
             brand: (row.brand || '').replace(/\s+/g, ' ').trim(),
-            colors: (row.colors || '').split('-').map(c => c.trim().toLowerCase()).filter(Boolean)
+            colors: (row.colors || '').split('-').map(c => c.trim().toLowerCase()).filter(Boolean),
+            discount: parseInt(row.descuento) || 0
         }));
 }
 
@@ -161,6 +190,12 @@ function renderCategoryTree() {
             currentLevel = currentLevel[part]._children;
         });
     });
+
+    // Agregar categoría "Promociones" si hay productos con descuento
+    const hasDiscounts = allProducts.some(p => p.discount > 0);
+    if (hasDiscounts) {
+        tree["Promociones"] = { _path: "PROMOCIONES", _children: {} };
+    }
 
     // Función recursiva para setear los paths completos
     function setPaths(node, parentPath = '') {
@@ -304,8 +339,9 @@ function renderColorFilters(colorsSet) {
 }
 
 function applyFiltersAndRender(rebuildUI = true) {
-    // 1. Filtrar primero por categoría para saber qué opciones de Marca/Talle/Color mostrar
+    // 1. Filtrar primero por categoría
     const categoryFiltered = allProducts.filter(p => {
+        if (activeFilters.category === "PROMOCIONES") return p.discount > 0;
         if (activeFilters.category && !p.category.startsWith(activeFilters.category)) return false;
         return true;
     });
@@ -324,6 +360,14 @@ function applyFiltersAndRender(rebuildUI = true) {
     });
 
     renderProducts(fullyFiltered);
+}
+
+function formatPrice(price) {
+    if (currentCurrency === 'ARS') {
+        const arsPrice = price * exchangeRate;
+        return `$ ${arsPrice.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    }
+    return `${price} USD`;
 }
 
 function renderProducts(productList) {
@@ -368,8 +412,9 @@ function renderProducts(productList) {
         }
 
         const productHtml = `
-            <div class="product-card visible">
+            <div class="product-card visible ${product.discount > 0 ? 'on-sale' : ''}">
                 <div class="product-image">
+                    ${product.discount > 0 ? `<div class="discount-badge">-${product.discount}%</div>` : ''}
                     ${imagesHtml}
                     ${carouselControls}
                     <div class="product-overlay">
@@ -379,7 +424,13 @@ function renderProducts(productList) {
                 <div class="product-info">
                     <div class="product-header">
                         <h3>${product.name}</h3>
-                        <span class="price">${product.price} USD</span>
+                        <div class="price-container">
+                            ${product.discount > 0
+                ? `<span class="old-price">${formatPrice(product.price)}</span>
+                                   <span class="price sale-price">${formatPrice(product.price * (1 - product.discount / 100))}</span>`
+                : `<span class="price">${formatPrice(product.price)}</span>`
+            }
+                        </div>
                     </div>
                     <p class="description">${product.description}</p>
                     <div class="sizes">
@@ -422,9 +473,7 @@ function attachDynamicListeners() {
             const activeSizeSpan = sizeContainer ? sizeContainer.querySelector('.active') : null;
             const selectedSize = activeSizeSpan ? activeSizeSpan.innerText : '';
 
-            const message = selectedSize
-                ? `Hola! Estoy interesado/a en el producto: *${productName}* (Ref: *${productId}*) en talle *${selectedSize}*. ¿Me podrían dar más información?`
-                : `Hola! Estoy interesado/a en el producto: *${productName}* (Ref: *${productId}*). ¿Me podrían dar más información?`;
+            const message = `Hola! Me gustó el producto: *${productName}* (Ref: *${productId}*)${selectedSize ? ` en talle *${selectedSize}*` : ''}. ¿Hacen envío a domicilio?`;
 
             window.open(formatWAppLink(message), '_blank');
         });

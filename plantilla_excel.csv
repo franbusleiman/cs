@@ -1,4 +1,5 @@
-id,name,price,description,image,image2,sizes,category,brand,colors
+id,name,price,description,image,image2,sizes,category,brand,colors,descuento
+CONFIG,TC,1000,Tipo de cambio USD a ARS,,,,,,
 buzo-01,"Buzo de Friza Negro",45000,"Buzo abrigado, 100% algodón y estilo oversize. Ideal invierno.","https://drive.google.com/file/d/1SzupjSLPy5M9KD-o7vNSTA95t69j5DQB/view?usp=sharing","","S-M-L","Ropa de hombre > Buzos/camperas","Nike","negro"
 rem-01,"Remera Básica Blanca",15000,"Remera de algodón para todos los días. Corte regular.","https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800","https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&q=80&w=800","S-M-XL","Ropa de hombre > Remeras","Adidas","blanco"
 pant-01,"Pantalón Cargo Casual",55000,"Pantalón de gabardina con múltiples bolsillos reforzados.","https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&q=80&w=800","","40-42-44","Ropa de hombre > Pantalones","Vans","marrón-verde"
