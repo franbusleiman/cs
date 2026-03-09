@@ -13,7 +13,8 @@ let activeFilters = {
     category: null, // String que matchea con el inicio de la categoría (ej "Ropa de hombre")
     brands: [],
     sizes: [],
-    colors: []
+    colors: [],
+    onlyPromotions: false
 };
 
 let currentCurrency = 'USD'; // 'USD' o 'ARS'
@@ -99,6 +100,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     usdLabel.classList.add('active');
                     arsLabel.classList.remove('active');
                 }
+                applyFiltersAndRender(false);
+            });
+        }
+
+        // 6. Listener para el filtro de promociones
+        const promoFilter = document.getElementById('promo-filter');
+        if (promoFilter) {
+            promoFilter.addEventListener('change', () => {
+                activeFilters.onlyPromotions = promoFilter.checked;
                 applyFiltersAndRender(false);
             });
         }
@@ -190,12 +200,6 @@ function renderCategoryTree() {
             currentLevel = currentLevel[part]._children;
         });
     });
-
-    // Agregar categoría "Promociones" si hay productos con descuento
-    const hasDiscounts = allProducts.some(p => p.discount > 0);
-    if (hasDiscounts) {
-        tree["Promociones"] = { _path: "PROMOCIONES", _children: {} };
-    }
 
     // Función recursiva para setear los paths completos
     function setPaths(node, parentPath = '') {
@@ -341,7 +345,6 @@ function renderColorFilters(colorsSet) {
 function applyFiltersAndRender(rebuildUI = true) {
     // 1. Filtrar primero por categoría
     const categoryFiltered = allProducts.filter(p => {
-        if (activeFilters.category === "PROMOCIONES") return p.discount > 0;
         if (activeFilters.category && !p.category.startsWith(activeFilters.category)) return false;
         return true;
     });
@@ -353,6 +356,7 @@ function applyFiltersAndRender(rebuildUI = true) {
 
     // 2. Aplicar el resto de los filtros sobre los ya filtrados por categoría
     const fullyFiltered = categoryFiltered.filter(p => {
+        if (activeFilters.onlyPromotions && p.discount <= 0) return false;
         if (activeFilters.brands.length > 0 && !activeFilters.brands.includes(p.brand)) return false;
         if (activeFilters.sizes.length > 0 && !activeFilters.sizes.some(s => p.sizes.includes(s))) return false;
         if (activeFilters.colors.length > 0 && !activeFilters.colors.some(c => p.colors.includes(c))) return false;
