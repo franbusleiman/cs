@@ -181,15 +181,15 @@ a {
     transition: .4s;
 }
 
-input:checked + .slider {
+input:checked+.slider {
     background-color: var(--accent);
 }
 
-input:focus + .slider {
+input:focus+.slider {
     box-shadow: 0 0 1px var(--accent);
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
     transform: translateX(16px);
 }
 
@@ -339,7 +339,27 @@ input:checked + .slider:before {
     padding: 24px;
     position: sticky;
     top: 100px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
     transition: var(--transition);
+}
+
+/* Custom Scrollbar for Sidebar */
+.shop-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.shop-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.shop-sidebar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
+}
+
+.shop-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #ccc;
 }
 
 .sidebar-header {
