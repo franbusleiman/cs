@@ -147,7 +147,7 @@ function normalizeProducts(rawList) {
             category: (row.category || '').replace(/\s+/g, ' ').trim(),
             brand: (row.brand || '').replace(/\s+/g, ' ').trim(),
             colors: (row.colors || '').split('-').map(c => c.trim().toLowerCase()).filter(Boolean),
-            secondItemOffer: String(row.segunda).trim().toLowerCase() === 'true'
+            secondItemOffer: String(row.segunda).trim().toLowerCase() === '1' || String(row.segunda).trim().toLowerCase() === 'true' || String(row.segunda).trim().toLowerCase() === 'verdadero'
         }));
 }
 
