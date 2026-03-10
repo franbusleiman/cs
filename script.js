@@ -14,7 +14,7 @@ let activeFilters = {
     brands: [],
     sizes: [],
     colors: [],
-    onlyPromotions: false
+    secondItemOffer: false
 };
 
 let currentCurrency = 'USD'; // 'USD' o 'ARS'
@@ -105,10 +105,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // 6. Listener para el filtro de promociones
-        const promoFilter = document.getElementById('promo-filter');
-        if (promoFilter) {
-            promoFilter.addEventListener('change', () => {
-                activeFilters.onlyPromotions = promoFilter.checked;
+        const secondItemFilter = document.getElementById('second-item-filter');
+        if (secondItemFilter) {
+            secondItemFilter.addEventListener('change', () => {
+                activeFilters.secondItemOffer = secondItemFilter.checked;
                 applyFiltersAndRender(false);
             });
         }
@@ -147,7 +147,7 @@ function normalizeProducts(rawList) {
             category: (row.category || '').replace(/\s+/g, ' ').trim(),
             brand: (row.brand || '').replace(/\s+/g, ' ').trim(),
             colors: (row.colors || '').split('-').map(c => c.trim().toLowerCase()).filter(Boolean),
-            discount: parseInt(row.descuento) || 0
+            secondItemOffer: String(row.segunda).trim().toLowerCase() === 'true'
         }));
 }
 
@@ -356,7 +356,7 @@ function applyFiltersAndRender(rebuildUI = true) {
 
     // 2. Aplicar el resto de los filtros sobre los ya filtrados por categoría
     const fullyFiltered = categoryFiltered.filter(p => {
-        if (activeFilters.onlyPromotions && p.discount <= 0) return false;
+        if (activeFilters.secondItemOffer && !p.secondItemOffer) return false;
         if (activeFilters.brands.length > 0 && !activeFilters.brands.includes(p.brand)) return false;
         if (activeFilters.sizes.length > 0 && !activeFilters.sizes.some(s => p.sizes.includes(s))) return false;
         if (activeFilters.colors.length > 0 && !activeFilters.colors.some(c => p.colors.includes(c))) return false;
@@ -416,9 +416,9 @@ function renderProducts(productList) {
         }
 
         const productHtml = `
-            <div class="product-card visible ${product.discount > 0 ? 'on-sale' : ''}">
+            <div class="product-card visible ${product.secondItemOffer ? 'on-sale' : ''}">
                 <div class="product-image">
-                    ${product.discount > 0 ? `<div class="discount-badge">-${product.discount}%</div>` : ''}
+                    ${product.secondItemOffer ? `<div class="discount-badge">2da UNIDAD 50% OFF</div>` : ''}
                     ${imagesHtml}
                     ${carouselControls}
                     <div class="product-overlay">
@@ -429,11 +429,7 @@ function renderProducts(productList) {
                     <div class="product-header">
                         <h3>${product.name}</h3>
                         <div class="price-container">
-                            ${product.discount > 0
-                ? `<span class="old-price">${formatPrice(product.price)}</span>
-                                   <span class="price sale-price">${formatPrice(product.price * (1 - product.discount / 100))}</span>`
-                : `<span class="price">${formatPrice(product.price)}</span>`
-            }
+                             <span class="price">${formatPrice(product.price)}</span>
                         </div>
                     </div>
                     <p class="description">${product.description}</p>

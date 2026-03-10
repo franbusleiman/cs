@@ -534,10 +534,12 @@ input:checked+.slider:before {
     left: 15px;
     background: #e74c3c;
     color: #fff;
-    padding: 4px 10px;
+    padding: 6px 14px;
     border-radius: 50px;
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     z-index: 5;
     box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
 }
